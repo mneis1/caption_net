@@ -67,6 +67,3 @@ def compile_description_list(dir, data):
 
 def unpickle_desc_list(dir):
     return pickle.load(open(dir, 'rb'))
-
-
-
