@@ -1,6 +1,18 @@
 import os
 import string
 import pickle
+from keras.preprocessing.text import Tokenizer
+
+def tokenize_descriptions(desc):
+    string_list = []
+    tk = Tokenizer()
+
+    for k in desc.keys():
+        for item in desc[k]:
+            string_list.append(item)
+
+    tk.fit_on_texts(string_list)
+    return tk
 
 def get_file_text(dir):
     f = open(dir, 'r')
@@ -34,7 +46,7 @@ def compile_description_list(dir, data):
     to_file_list = []
 
     for item in l:
-        t = item.split
+        t = item.split()
         if len(item) < 2:
             continue
 
