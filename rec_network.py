@@ -38,8 +38,24 @@ class rec_network:
 
         return model
 
-    def inject_model(self):
-        return
+
+    def inject_model(self, dropout_rate=0.5, output_units=256, hidden_activation='relu', optimizer='adam'):
+        feats_input = layers.Input(shape=(4096,))
+        feats_layer_1 = layers.Dropout(dropout_rate)(feats_input)
+        feats_layer_2 = layers.Dense(output_units, activation=hidden_activation)(feats_layer_1)
+
+        desc_input = layers.Input(shape=(self.max_len,))
+        desc_layer_1 = layers.Embedding(self.word_count, output_units, mask_zero=True)(desc_input)
+
+        dec_layer_1 = layers.merge.add([feats_layer_2, desc_layer_1])
+        dec_layer_2 = layers.Dropout(dropout_rate)(dec_layer_1)
+        dec_layer_3 = layers.LSTM(output_units)(dec_layer_2)
+
+        out_layer = layers.Dense(self.word_count, activation='softmax')(dec_layer_3)
+        model = Model(inputs=[feats_input, desc_input], outputs=out_layer)
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+
+        return model
 
 
     def get_max_len(self):
