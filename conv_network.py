@@ -38,7 +38,8 @@ class conv_network:
         features_dict = dict()
         for image in os.listdir(data_path):
             image_path = data_path + '/' + image
-            features_dict[image_path] = self.get_img_features(image_path, self.model_params['resize_dims'])
+            img_id, _ = os.path.splitext(image)
+            features_dict[img_id] = self.get_img_features(image_path, self.model_params['resize_dims'])
         
         #dump features to file so program doesnt have to compute everytime
         dump_loc = open('data_features.pkl','wb')

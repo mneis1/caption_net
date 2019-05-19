@@ -1,6 +1,7 @@
 from keras.utils import to_categorical
-from keras.preprocessing.sequence import pad_sequence
+from keras.preprocessing.sequence import pad_sequences
 import numpy as np
+from keras.preprocessing.text import Tokenizer
 
 def encode_set(desc_list, img, max_len, tokenizer, no_of_words):
     params_1 = []
@@ -16,7 +17,7 @@ def encode_set(desc_list, img, max_len, tokenizer, no_of_words):
             set_in = set_[:val]
             set_out = set_[val]
 
-            set_in = pad_sequence([set_in], maxlen=max_len)
+            set_in = pad_sequences([set_in], maxlen=max_len)
             params_2.append(set_in[0])
 
             set_out = to_categorical([set_out], num_classes=no_of_words)
@@ -32,9 +33,10 @@ def encode_set(desc_list, img, max_len, tokenizer, no_of_words):
             
 
 
-def compile_seq(desc_list, img_list, max_len, tokenizer):
+def compile_seq(desc_list, img_list, max_len, tokenizer, word_count):
     while True:
         for id_, desc in desc_list.items():
-            in_1, in_2, out = encode_set(desc, img_list[id_][0], max_len, tokenizer, len(tokenizer.word_index)+1)
+            print(type(tokenizer))
+            in_1, in_2, out = encode_set(desc, img_list[id_][0], max_len, tokenizer, word_count)
             in_out_set = [[in_1,in_2],out]
             yield in_out_set
