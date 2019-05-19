@@ -88,8 +88,8 @@ class rec_network:
         s = len(self.desc_list)
 
         for count in range(epochs):
-            gen = encoding.compile_seq(self.desc_list, feat_list, self.max_len, self.tokenizer, self.word_count)
-            self.model.fit_generator(gen, epochs=epochs, steps_per_epoch=s, verbose=1)
+            gen = self.compile_seq(feat_list)
+            self.model.fit_generator(gen, epochs=1, steps_per_epoch=s, verbose=1)
             self.model.save('temp/rnn_models/'+str(self.name)+'_model_'+str(count)+'.h5')
 
 
