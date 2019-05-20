@@ -26,7 +26,7 @@ def get_file_list(dir):
 #compiles dictiionary of descriptions, indexed by the image name they are correlated to, and removes erronious 
 # characters from description
 #returns a description dictionary but also saves dictionary as a .pkl for unpickling later
-def compile_description_list(dir, data):
+def compile_description_list(dir):
     f = open(dir, 'r')
     l = f.readlines()
 
@@ -51,18 +51,29 @@ def compile_description_list(dir, data):
         id_, _ = os.path.splitext(id_)
         description = ' '.join(description)
 
-        description = 'startseq ' + description + ' endseq'
+        description = 'startcap ' + description + ' stopcap'
 
-        if id_ in data:
-            if id_ not in desc_list:
-                desc_list[id_] = [description] 
-            else:
-                desc_list[id_].append(description)
+        if id_ not in desc_list:
+            desc_list[id_] = [] 
+        
+        desc_list[id_].append(description) 
 
-    
     pickle.dump(desc_list, open('descriptions.pkl', 'wb'))
 
     return desc_list
+
+    #removes any description not in the data set from a description list returned
+def filter_desc_list(data):
+    desc_list = pickle.load(open('descriptions.pkl', 'rb'))
+        
+    filtered_desc_list = desc_list.copy()
+
+    for item in desc_list:
+        if item not in data:
+            del filtered_desc_list[item]
+
+
+    return filtered_desc_list
 
 
 

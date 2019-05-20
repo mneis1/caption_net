@@ -1,6 +1,6 @@
 import pickle
 import utils.encoding as encoding
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.preprocessing.text import Tokenizer
 import keras.layers as layers
 from keras.utils import to_categorical
@@ -9,26 +9,27 @@ import numpy as np
 
 
 class rec_network:
-    def __init__(self, model_name, dropout_rate=0.5, output_units=256, hidden_activation='relu', optimizer='adam'):
+    def __init__(self, model_name, train_feature_list, train_description_list, model_path=None, tokenizer_path=None, dropout_rate=0.5, output_units=256, hidden_activation='relu', optimizer='adam'):
         self.name = model_name
-        self.desc_list = pickle.load(open('descriptions.pkl', 'rb'))
-        self.tokenizer = Tokenizer()
-        self.get_tokenizer()
+        self.desc_list = train_description_list
+        self.feat_list = train_feature_list
+        if tokenizer_path == None:
+            self.tokenizer = Tokenizer()
+            self.get_tokenizer()
+        else:
+            self.tokenizer = pickle.load(open(tokenizer_path, 'rb'))
+
         self.max_len = self.get_max_len()
         self.word_count = self.count_words()
-        
-        if model_name == 'merge':
-            self.model = self.merge_model(dropout_rate, output_units, hidden_activation, optimizer)
-        elif model_name == 'inject':
-            self.model = self.inject_model(dropout_rate, output_units, hidden_activation, optimizer)
 
-        
-    
-    def get_model(self, model_name):
-        if model_name == 'merge':
-            return self.merge_model()
-        elif model_name == 'inject':
-            return self.inject_model()
+        if model_path == None:
+            if model_name == 'merge':
+                self.model = self.merge_model(dropout_rate, output_units, hidden_activation, optimizer)
+            elif model_name == 'inject':
+                self.model = self.inject_model(dropout_rate, output_units, hidden_activation, optimizer)
+        else:
+            self.model = load_model(model_path)
+
 
     
     def merge_model(self, dropout_rate=0.5, output_units=256, hidden_activation='relu', optimizer='adam'):
@@ -74,26 +75,46 @@ class rec_network:
         temp_list = []
 
         for k in self.desc_list.keys():
-            for item in self.desc_list[k]:
-                temp_list.append(item)
-
-        length = max(len(item.split()) for item in temp_list)
+            [temp_list.append(i) for i in self.desc_list[k]]
+        length = max(len(i.split()) for i in temp_list)
         return length
 
 
     def train_model(self, epochs):
         
-        feat_list = pickle.load(open('data_features.pkl', 'rb'))
+        feat_list = self.feat_list
 
         s = len(self.desc_list)
 
         for count in range(epochs):
-            gen = self.compile_seq(feat_list)
+            gen = self.compile_seq()
             self.model.fit_generator(gen, epochs=1, steps_per_epoch=s, verbose=1)
             self.model.save('temp/rnn_models/'+str(self.name)+'_model_'+str(count)+'.h5')
 
+    def predict_caption(self, img):
+        cap = ['startcap']
+        for count in range(self.max_len):
+            next_word = None
+            set_ = self.tokenizer.texts_to_sequences(['startcap'])[0]
+            set_ = pad_sequences([set_], maxlen=self.max_len)
+            next_ = np.argmax(self.model.predict([img,set_], verbose=0))
 
-    
+            for id_, ind in self.tokenizer.word_index.items():
+                if ind == next_:
+                    next_word = id_
+
+            if next_word == None:
+                break
+            else:
+                cap.append(next_word)
+
+                if next_word == 'stopcap':
+                    break
+
+        return ' '.join(cap)            
+
+
+
     def get_tokenizer(self):
         string_list = []
 
@@ -102,6 +123,7 @@ class rec_network:
                 string_list.append(item)
 
         self.tokenizer.fit_on_texts(string_list)
+        pickle.dump(self.tokenizer, open('tokenizer.pkl','wb'))
 
     
     def encode_set(self, img, sub_desc_list):
@@ -134,10 +156,10 @@ class rec_network:
             
 
 
-    def compile_seq(self, img_list):
+    def compile_seq(self):
         while True:
             for id_, desc in self.desc_list.items():
-                in_1, in_2, out = self.encode_set(img_list[id_][0], desc)
+                in_1, in_2, out = self.encode_set(self.feat_list[id_][0], desc)
                 in_out_set = [[in_1,in_2],out]
                 yield in_out_set
 

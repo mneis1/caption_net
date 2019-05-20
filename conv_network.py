@@ -66,9 +66,9 @@ class conv_network:
 
         return model_params
 
-    def load_features(dir):
+    def load_features(self, dir='data_features.pkl'):
         return pickle.load(open(dir, 'rb'))
 
     #returns features that are in a given set of data. data should be a list of data id's to compare
-    def filter_features(features, data):
+    def filter_features(self, features, data):
         return {id_: features[id_] for id_ in data}
