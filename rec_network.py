@@ -8,8 +8,10 @@ from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
 
+#TODO: need a way to save an reload params such as max length
+
 class rec_network:
-    def __init__(self, model_name, train_feature_list, train_description_list, model_path=None, tokenizer_path=None, dropout_rate=0.5, output_units=256, hidden_activation='relu', optimizer='adam'):
+    def __init__(self, model_name, train_feature_list, train_description_list, model_path=None, tokenizer_path=None, max_length=None, dropout_rate=0.5, output_units=256, hidden_activation='relu', optimizer='adam'):
         self.name = model_name
         self.desc_list = train_description_list
         self.feat_list = train_feature_list
@@ -19,7 +21,7 @@ class rec_network:
         else:
             self.tokenizer = pickle.load(open(tokenizer_path, 'rb'))
 
-        self.max_len = self.get_max_len()
+        self.max_len = self.get_max_len() if max_length is None else max_length
         self.word_count = self.count_words()
 
         if model_path == None:
@@ -87,15 +89,21 @@ class rec_network:
         s = len(self.desc_list)
 
         for count in range(epochs):
+            self.shuffle_feats()
             gen = self.compile_seq()
             self.model.fit_generator(gen, epochs=1, steps_per_epoch=s, verbose=1)
             self.model.save('temp/rnn_models/'+str(self.name)+'_model_'+str(count)+'.h5')
+            
+
+
+            
 
     def predict_caption(self, img):
         cap = ['startcap']
         for count in range(self.max_len):
             next_word = None
-            set_ = self.tokenizer.texts_to_sequences(['startcap'])[0]
+            prev_set = ' '.join(cap)
+            set_ = self.tokenizer.texts_to_sequences([prev_set])[0]
             set_ = pad_sequences([set_], maxlen=self.max_len)
             next_ = np.argmax(self.model.predict([img,set_], verbose=0))
 
@@ -165,4 +173,11 @@ class rec_network:
 
     def count_words(self):
         return len(self.tokenizer.word_index)+1
+
+    def shuffle_feats(self):
+        keys = list(self.feat_list.keys())
+        np.random.shuffle(keys)
+        shuffled_dict = {k: self.feat_list[k] for k in keys}
+        self.feat_list = shuffled_dict
+
         
