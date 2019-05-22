@@ -93,6 +93,7 @@ class rec_network:
             gen = self.compile_seq()
             self.model.fit_generator(gen, epochs=1, steps_per_epoch=s, verbose=1)
             self.model.save('temp/rnn_models/'+str(self.name)+'_model_'+str(count)+'.h5')
+            print('Model saved: '+str(self.name)+'_model_'+str(count)+'.h5')
             
 
 

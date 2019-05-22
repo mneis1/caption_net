@@ -23,3 +23,6 @@ def evaluate_BLEU4(test_img_set, test_desc_set, model_name, model_path, max_len,
 
     return [bleu1, bleu2, bleu3, bleu4]
 
+
+
+
